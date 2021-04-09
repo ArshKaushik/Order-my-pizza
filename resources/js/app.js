@@ -85,6 +85,7 @@ let adminAreaPath = window.location.pathname
 if(adminAreaPath.includes('admin')) {
     // Admin functioning
     initAdmin(socket)
+    
     socket.emit('join', 'adminRoom')
 }
 
