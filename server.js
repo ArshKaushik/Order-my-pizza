@@ -9,6 +9,7 @@ const session = require('express-session')
 const flash = require('express-flash')
 const MongoDbStore = require('connect-mongo')(session)
 const passport = require('passport')
+const Emitter = require('events')
 const PORT = process.env.PORT || 80
 
 // Database
@@ -27,6 +28,10 @@ let mongoStore = new MongoDbStore({
                     mongooseConnection: connection,
                     collection: 'sessions'
                 })
+
+// Event emitter
+const eventEmitter = new Emitter()
+app.set('eventEmitterKey', eventEmitter)
 
 // Session config (session library works as a middleware)
 app.use(session({
@@ -66,6 +71,25 @@ app.set('view engine', 'ejs')
 require('./routes/web')(app)
 
 // Listening
-app.listen(PORT, (req, res) => {
-    console.log(`Listening on port ${PORT}`)
+const server = app.listen(PORT, (req, res) => {
+                console.log(`Listening on port ${PORT}`)
+            })
+
+// Socket.io integration
+const io = require('socket.io')(server)
+io.on('connection', (socket) => {
+    // Private room creation (unique ID)
+    // Join
+    console.log(socket.id)
+    socket.on('join', (roomName) => {
+        socket.join(roomName)
+    })
+})
+
+eventEmitter.on('orderUpdated', (data) => {
+    io.to(`order_${data.id}`).emit('orderUpdatedEvent', data) // We'll recieve 'orderUpdatedEvent' on the client side
+})
+
+eventEmitter.on('orderPlaced', (data) => {
+    io.to('adminRoom').emit('orderPlacedEvent', data)
 })
