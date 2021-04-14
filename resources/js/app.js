@@ -4,6 +4,7 @@ import axios from 'axios'
 import Noty from 'noty'
 import {initAdmin} from './admin'
 import moment from 'moment'
+import {initStripe} from './stripe'
 
 let addToCart = document.querySelectorAll('.add-to-cart')
 let cartCounter = document.querySelector('#cartCounter')
@@ -49,7 +50,7 @@ let order = hiddenInput ? hiddenInput.value : null
 order = JSON.parse(order)
 let time = document.createElement('small')
 
-function upadteStatus(order) {
+function updateStatus(order) {
     statuses.forEach((status) => {
         status.classList.remove('step-completed')
         status.classList.remove('current')
@@ -72,7 +73,10 @@ function upadteStatus(order) {
     })
 }
 
-upadteStatus(order)
+updateStatus(order)
+
+// Stripe
+initStripe()
 
 // Socket.io
 let socket = io()
@@ -93,7 +97,7 @@ socket.on('orderUpdatedEvent', (data) => {
     const updatedOrder = {...order}
     updatedOrder.updatedAt = moment().format()
     updatedOrder.status = data.status
-    upadteStatus(updatedOrder)
+    updateStatus(updatedOrder)
     
     new Noty({
         type: 'success',
